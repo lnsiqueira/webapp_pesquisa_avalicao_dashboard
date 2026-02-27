@@ -18,17 +18,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'NeoBen - Benefícios Corporativos',
+      title: 'Dona Deôla - Dashboard',
       theme: AppTheme.theme,
-      home: const LoginScreen(),
-      // home: HomeScreen(
-      //   loggedInUser: User(
-      //       id: 'id',
-      //       name: 'name',
-      //       role: 'role',
-      //       email: 'email',
-      //       avatar: 'avatar'),
-      // ),
+      // home: const LoginScreen(),
+      home: HomeScreen(
+        loggedInUser: User(
+            id: 'id',
+            name: 'name',
+            role: 'role',
+            email: 'email',
+            avatar: 'avatar'),
+      ),
       debugShowCheckedModeBanner: false,
     );
   }
