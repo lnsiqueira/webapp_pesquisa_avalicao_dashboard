@@ -383,11 +383,24 @@ class _HomeScreenState extends State<HomeScreen> {
               items: filiais.map((filial) {
                 return DropdownMenuItem(
                   value: filial,
-                  child: Text(filial.filial),
+                  // child: Text(filial.filial),
+                  child: Text(
+                    filial.filial,
+                    style: TextStyle(
+                      color: filial.id == "1749930481153"
+                          ? Colors.black
+                          : Colors.grey[400],
+                    ),
+                  ),
                 );
               }).toList(),
+              // onChanged: (filial) {
+              //   if (filial != null) {
+              //     _selecionarFilial(filial);
+              //   }
+              // },
               onChanged: (filial) {
-                if (filial != null) {
+                if (filial != null && filial.id == "1749930481153") {
                   _selecionarFilial(filial);
                 }
               },
@@ -479,11 +492,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           ...filiais.map((filial) {
             final isSelected = filialSelecionada?.id == filial.id;
+            final isAtiva = filial.id ==
+                "1749930481153"; // ← CORREÇÃO: Verificar cada filial
+
             return ListTile(
               title: Text(
                 filial.filial,
                 style: TextStyle(
-                  color: isSelected ? AppTheme.primaryRed : null,
+                  color: isAtiva ? Colors.black : Colors.grey[400],
                 ),
               ),
               selected: isSelected,
@@ -492,10 +508,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icons.store,
                 color: isSelected ? AppTheme.primaryRed : null,
               ),
-              onTap: () {
-                _selecionarFilial(filial);
-                Navigator.pop(context);
-              },
+              enabled: isAtiva,
+              onTap: isAtiva
+                  ? () {
+                      _selecionarFilial(filial);
+                      Navigator.pop(context);
+                    }
+                  : null,
+              tileColor: isAtiva ? null : Colors.grey[100],
             );
           }).toList(),
         ],
@@ -523,27 +543,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
           ),
           const SizedBox(height: 12),
-
           // 👇 Scroll horizontal em uma única linha
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: filiais.map((filial) {
                 final isSelected = filialSelecionada?.id == filial.id;
+                final isAtiva = filial.id ==
+                    "1749930481153"; // ← CORREÇÃO: Verificar cada filial
 
                 return Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: FilterChip(
                     label: Text(filial.filial),
                     selected: isSelected,
-                    onSelected: (_) {
-                      _selecionarFilial(filial);
-                    },
-                    backgroundColor: Colors.grey[100],
-                    selectedColor: AppTheme.primaryRed.withOpacity(0.2),
+                    onSelected: isAtiva
+                        ? (_) {
+                            _selecionarFilial(filial);
+                          }
+                        : null,
+                    backgroundColor:
+                        isAtiva ? Colors.grey[100] : Colors.grey[300],
+                    selectedColor: isAtiva
+                        ? AppTheme.primaryRed.withOpacity(0.2)
+                        : Colors.grey[300],
                     side: BorderSide(
-                      color:
-                          isSelected ? AppTheme.primaryRed : Colors.grey[300]!,
+                      color: isAtiva
+                          ? (isSelected
+                              ? AppTheme.primaryRed
+                              : Colors.grey[300]!)
+                          : Colors.grey[400]!,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
