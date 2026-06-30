@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp_pesquisa_avalicao_dashboard/model/avaliacoes_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:html' as html;
+import 'package:excel/excel.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -60,50 +62,94 @@ class FirebaseService {
   }
 
   /// Busca todas as avaliações de uma filial específica
-  Future<List<Avaliacao>> buscarAvaliacoesPorFilial(String idFilial) async {
-    try {
-      print('🔍 Buscando avaliações para filial: $idFilial');
+  // Future<List<Avaliacao>> buscarAvaliacoesPorFilial(
+  //   String idFilial, {
+  //   DateTime? dataInicial,
+  //   DateTime? dataFinal,
+  // }) async {
+  //   try {
+  //     print('🔍 Buscando avaliações para filial: $idFilial');
 
-      // Primeiro, buscar todos os documentos
-      final snapshot = await _firestore.collection('avaliacoes').get();
+  //     Query query = _firestore
+  //         .collection('avaliacoes')
+  //         .where('id_filial', isEqualTo: idFilial);
 
-      print('📊 Total de avaliações no Firestore: ${snapshot.docs.length}');
+  //     //Filtro de data inicial
+  //     if (dataInicial != null) {
+  //       query = query.where(
+  //         'data_hora_resposta',
+  //         isGreaterThanOrEqualTo: Timestamp.fromDate(dataInicial),
+  //       );
+  //     }
 
-      // Filtrar manualmente por id_filial
-      final avaliacoesFiltradas = snapshot.docs.where((doc) {
-        final data = doc.data();
-        final idFilialDoc = data['id_filial']?.toString() ?? '';
-        print(
-            '   Comparando: "$idFilialDoc" == "$idFilial" ? ${idFilialDoc == idFilial}');
-        return idFilialDoc == idFilial;
-      }).toList();
+  //     //Filtro de data final
+  //     if (dataFinal != null) {
+  //       query = query.where(
+  //         'data_hora_resposta',
+  //         isLessThan: Timestamp.fromDate(
+  //           DateTime(
+  //             dataFinal.year,
+  //             dataFinal.month,
+  //             dataFinal.day + 1,
+  //           ),
+  //         ),
+  //       );
+  //     }
 
-      print(
-          '✅ Avaliações encontradas para filial: ${avaliacoesFiltradas.length}');
+  //     query = query.orderBy('data_hora_resposta', descending: true);
 
-      // Ordenar por data
-      avaliacoesFiltradas.sort((a, b) {
-        final dataA = a.data()['data_hora_resposta'];
-        final dataB = b.data()['data_hora_resposta'];
+  //     final snapshot = await query.get();
 
-        DateTime dateTimeA =
-            dataA is Timestamp ? dataA.toDate() : DateTime.now();
-        DateTime dateTimeB =
-            dataB is Timestamp ? dataB.toDate() : DateTime.now();
+  //     print('✅ Avaliações encontradas: ${snapshot.docs.length}');
 
-        return dateTimeB.compareTo(dateTimeA);
-      });
+  //     return snapshot.docs
+  //         .map((doc) => Avaliacao.fromMap(
+  //               doc.id,
+  //               doc.data() as Map<String, dynamic>,
+  //             ))
+  //         .toList();
+  //   } catch (e) {
+  //     print('❌ Erro ao buscar avaliações: $e');
+  //     return [];
+  //   }
+  // }
+  Future<List<Avaliacao>> buscarAvaliacoesPorFilial(
+    String idFilial, {
+    DateTime? dataInicial,
+    DateTime? dataFinal,
+  }) async {
+    print('🔍 Buscando avaliações para filial: $idFilial');
 
-      final avaliacoes = avaliacoesFiltradas.map((doc) {
-        print('   📄 Avaliação: ${doc.data()}');
-        return Avaliacao.fromMap(doc.id, doc.data());
-      }).toList();
+    Query query = _firestore
+        .collection('avaliacoes')
+        .where('id_filial', isEqualTo: idFilial);
 
-      return avaliacoes;
-    } catch (e) {
-      print('❌ Erro ao buscar avaliações: $e');
-      return [];
+    if (dataInicial != null) {
+      query = query.where(
+        'data_hora_resposta',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(dataInicial),
+      );
     }
+
+    if (dataFinal != null) {
+      query = query.where(
+        'data_hora_resposta',
+        isLessThan: Timestamp.fromDate(
+          DateTime(dataFinal.year, dataFinal.month, dataFinal.day + 1),
+        ),
+      );
+    }
+
+    query = query.orderBy('data_hora_resposta', descending: true);
+
+    final snapshot = await query.get(); // se faltar índice, lança aqui
+
+    print('✅ Avaliações encontradas: ${snapshot.docs.length}');
+
+    return snapshot.docs
+        .map((doc) =>
+            Avaliacao.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+        .toList();
   }
 
   /// Busca avaliações de uma filial com filtro de data
@@ -232,37 +278,72 @@ class FirebaseService {
   }
 
   /// Calcula estatísticas de uma filial
+  // Future<EstatisticasFilial> calcularEstatisticasFilial(
+  //   String filialId,
+  //   String filialNome,
+  // ) async {
+  // Future<EstatisticasFilial> calcularEstatisticasFilial(
+  //   String filialId,
+  //   String filialNome, {
+  //   DateTime? dataInicial,
+  //   DateTime? dataFinal,
+  // }) async {
+  //   try {
+  //     print('📈 Calculando estatísticas para: $filialNome');
+  //     // final avaliacoes = await buscarAvaliacoesPorFilial(filialId);
+  //     final avaliacoes = await buscarAvaliacoesPorFilial(
+  //       filialId,
+  //       dataInicial: dataInicial,
+  //       dataFinal: dataFinal,
+  //     );
+  //     print('   Total de avaliações: ${avaliacoes.length}');
+
+  //     final stats =
+  //         EstatisticasFilial.fromAvaliacoes(filialId, filialNome, avaliacoes);
+
+  //     print('   Média Geral: ${stats.mediaSatisfacaoGeral}');
+  //     print('✅ Estatísticas calculadas');
+
+  //     return stats;
+  //   } catch (e) {
+  //     print('❌ Erro ao calcular estatísticas: $e');
+  //     return EstatisticasFilial(
+  //       filialId: filialId,
+  //       filialNome: filialNome,
+  //       totalAvaliacoes: 0,
+  //       mediaSabor: 0.0,
+  //       mediaQualidadeProdutos: 0.0,
+  //       mediaTemperatura: 0.0,
+  //       mediaVariedadeProdutos: 0.0,
+  //       mediaCaixaAtendimento: 0.0,
+  //       mediaSatisfacaoGeral: 0.0,
+  //       avaliacoes: [],
+  //     );
+  //   }
+  // }
   Future<EstatisticasFilial> calcularEstatisticasFilial(
     String filialId,
-    String filialNome,
-  ) async {
-    try {
-      print('📈 Calculando estatísticas para: $filialNome');
-      final avaliacoes = await buscarAvaliacoesPorFilial(filialId);
-      print('   Total de avaliações: ${avaliacoes.length}');
+    String filialNome, {
+    DateTime? dataInicial,
+    DateTime? dataFinal,
+  }) async {
+    print('📈 Calculando estatísticas para: $filialNome');
+    final avaliacoes = await buscarAvaliacoesPorFilial(
+      filialId,
+      dataInicial: dataInicial,
+      dataFinal: dataFinal,
+    );
+    print('   Total de avaliações: ${avaliacoes.length}');
 
-      final stats =
-          EstatisticasFilial.fromAvaliacoes(filialId, filialNome, avaliacoes);
+    final stats =
+        EstatisticasFilial.fromAvaliacoes(filialId, filialNome, avaliacoes);
 
-      print('   Média Geral: ${stats.mediaSatisfacaoGeral}');
-      print('✅ Estatísticas calculadas');
+    print('   Média Geral: ${stats.mediaSatisfacaoGeral}');
+    print('✅ Estatísticas calculadas');
 
-      return stats;
-    } catch (e) {
-      print('❌ Erro ao calcular estatísticas: $e');
-      return EstatisticasFilial(
-        filialId: filialId,
-        filialNome: filialNome,
-        totalAvaliacoes: 0,
-        mediaSabor: 0.0,
-        mediaQualidadeProdutos: 0.0,
-        mediaTemperatura: 0.0,
-        mediaVariedadeProdutos: 0.0,
-        mediaCaixaAtendimento: 0.0,
-        mediaSatisfacaoGeral: 0.0,
-        avaliacoes: [],
-      );
-    }
+    return stats;
+    // removi o try/catch — deixa o erro subir para quem chamou (HomeScreen),
+    // que já sabe tratar e mostrar mensagem
   }
 
   /// Busca avaliações agrupadas por data para gráfico de linha

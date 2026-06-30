@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:webapp_pesquisa_avalicao_dashboard/model/avaliacoes_model.dart';
 import 'package:webapp_pesquisa_avalicao_dashboard/model/user_model.dart';
+import 'package:webapp_pesquisa_avalicao_dashboard/services/excel_service.dart';
 import 'package:webapp_pesquisa_avalicao_dashboard/services/firebase_service.dart';
 import '../theme/app_theme.dart';
 
@@ -20,18 +21,133 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
+  final ExcelExportService _excelExportService = ExcelExportService();
 
   List<Filial> filiais = [];
   Filial? filialSelecionada;
   EstatisticasFilial? estatisticas;
   bool _isLoading = false;
   String? _errorMessage;
-
+  // DateTime? dataInicial;
+  // DateTime? dataFinal;
+  DateTimeRange? periodoSelecionado;
   @override
   void initState() {
     super.initState();
+    final hoje = DateTime.now();
+
+    periodoSelecionado = DateTimeRange(
+      start: DateTime(hoje.year, hoje.month, 1),
+      end: DateTime(hoje.year, hoje.month + 1, 0),
+    );
+
     _carregarFiliais();
   }
+
+  // void exportarEstatisticas(EstatisticasFilial estatisticas) {
+  //   final excel = Excel.createExcel();
+
+  //   // NÃO delete o Sheet1 aqui ainda
+
+  //   // ===== Aba 1: Resumo =====
+  //   final resumo = excel['Resumo'];
+
+  //   resumo.appendRow([
+  //     TextCellValue('Filial'),
+  //     TextCellValue(estatisticas.filialNome),
+  //   ]);
+  //   resumo.appendRow([
+  //     TextCellValue('Total de Avaliações'),
+  //     IntCellValue(estatisticas.totalAvaliacoes),
+  //   ]);
+  //   resumo.appendRow([]);
+  //   resumo.appendRow([
+  //     TextCellValue('Métrica'),
+  //     TextCellValue('Média'),
+  //     TextCellValue('% Satisfação'),
+  //   ]);
+
+  //   void linhaMetrica(String nome, double valor) {
+  //     resumo.appendRow([
+  //       TextCellValue(nome),
+  //       TextCellValue(valor.toStringAsFixed(2)),
+  //       TextCellValue('${((valor / 3.0) * 100).toStringAsFixed(0)}%'),
+  //     ]);
+  //   }
+
+  //   linhaMetrica('Satisfação Geral', estatisticas.mediaSatisfacaoGeral);
+  //   linhaMetrica('Sabor', estatisticas.mediaSabor);
+  //   linhaMetrica('Qualidade dos Produtos', estatisticas.mediaQualidadeProdutos);
+  //   linhaMetrica('Variedade de Produtos', estatisticas.mediaVariedadeProdutos);
+  //   linhaMetrica('Atendimento', estatisticas.mediaCaixaAtendimento);
+
+  //   for (var col = 0; col < 3; col++) {
+  //     final cell = resumo.cell(CellIndex.indexByColumnRow(
+  //       columnIndex: col,
+  //       rowIndex: 3,
+  //     ));
+  //     cell.cellStyle = CellStyle(bold: true);
+  //   }
+
+  //   // ===== Aba 2: Avaliações Detalhadas =====
+  //   final detalhes = excel['Avaliações'];
+
+  //   detalhes.appendRow([
+  //     TextCellValue('Usuário'),
+  //     TextCellValue('Data/Hora'),
+  //     TextCellValue('Satisfação Geral'),
+  //     TextCellValue('Sabor'),
+  //     TextCellValue('Qualidade'),
+  //     TextCellValue('Variedade'),
+  //     TextCellValue('Atendimento'),
+  //     TextCellValue('Comentário'),
+  //   ]);
+
+  //   for (var col = 0; col < 8; col++) {
+  //     final cell = detalhes.cell(CellIndex.indexByColumnRow(
+  //       columnIndex: col,
+  //       rowIndex: 0,
+  //     ));
+  //     cell.cellStyle = CellStyle(bold: true);
+  //   }
+
+  //   for (final av in estatisticas.avaliacoes) {
+  //     detalhes.appendRow([
+  //       TextCellValue(av.usuarioId),
+  //       TextCellValue(
+  //           DateFormat('dd/MM/yyyy HH:mm').format(av.dataHoraResposta)),
+  //       DoubleCellValue(av.avaliacoes.satisfacaoGeralDouble),
+  //       DoubleCellValue(av.avaliacoes.saborDouble),
+  //       DoubleCellValue(av.avaliacoes.qualidadeProdutosDouble),
+  //       DoubleCellValue(av.avaliacoes.variedadeProdutosDouble),
+  //       DoubleCellValue(av.avaliacoes.caixaAtendimentoDouble),
+  //       TextCellValue(av.comentarios),
+  //     ]);
+  //   }
+
+  //   // ✅ deleta o Sheet1 só agora, depois que Resumo/Avaliações já existem e têm conteúdo
+  //   if (excel.sheets.containsKey('Sheet1')) {
+  //     excel.delete('Sheet1');
+  //   }
+
+  //   // ===== Gera os bytes e dispara o download =====
+  //   final bytes = excel.encode();
+  //   if (bytes == null) return;
+
+  //   final nomeArquivo =
+  //       'avaliacoes_${estatisticas.filialNome}_${DateFormat('ddMMyyyy').format(DateTime.now())}.xlsx'
+  //           .replaceAll(' ', '_');
+
+  //   final blob = html.Blob(
+  //     [bytes],
+  //     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  //   );
+  //   final url = html.Url.createObjectUrlFromBlob(blob);
+  //   final anchor = html.AnchorElement(href: url)
+  //     ..setAttribute('download', nomeArquivo)
+  //     ..click();
+  //   html.Url.revokeObjectUrl(url);
+  // }
 
   /// Carrega a lista de filiais
   void _carregarFiliais() async {
@@ -44,9 +160,22 @@ class _HomeScreenState extends State<HomeScreen> {
       final filiaisBuscadas = await _firebaseService.buscarFiliais();
       setState(() {
         filiais = filiaisBuscadas;
+        // if (filiais.isNotEmpty) {
+        //   filialSelecionada = filiais.first;
+        //   _carregarEstatisticas(filialSelecionada!.id);
+        // }
         if (filiais.isNotEmpty) {
-          filialSelecionada = filiais.first;
-          _carregarEstatisticas(filialSelecionada!.id);
+          filialSelecionada = filiais.firstWhere(
+            (f) => f.id == "1749930481153",
+            orElse: () => filiais.first,
+          );
+
+          // _carregarEstatisticas(filialSelecionada!.id);
+          _carregarEstatisticas(
+            filialSelecionada!.id,
+            dataInicial: periodoSelecionado!.start,
+            dataFinal: periodoSelecionado!.end,
+          );
         }
         _isLoading = false;
       });
@@ -59,7 +188,46 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Carrega estatísticas de uma filial específica
-  void _carregarEstatisticas(String filialId) async {
+  // void _carregarEstatisticas(String filialId) async {
+  // _carregarEstatisticas(
+  //   String filialId, {
+  //   DateTime? dataInicial,
+  //   DateTime? dataFinal,
+  // }) async {
+  //   setState(() {
+  //     _isLoading = true;
+  //     _errorMessage = null;
+  //   });
+
+  //   try {
+  //     final filial = filiais.firstWhere((f) => f.id == filialId);
+  //     final stats = await _firebaseService.calcularEstatisticasFilial(
+  //       filialId,
+  //       filial.filial,
+  //       dataInicial: dataInicial,
+  //       dataFinal: dataFinal,
+  //     );
+  //     // final stats = await _firebaseService.calcularEstatisticasFilial(
+  //     //   filialId,
+  //     //   filial.filial,
+  //     // );
+
+  //     setState(() {
+  //       estatisticas = stats;
+  //       _isLoading = false;
+  //     });
+  //   } catch (e) {
+  //     setState(() {
+  //       _errorMessage = 'Erro ao carregar estatísticas: $e';
+  //       _isLoading = false;
+  //     });
+  //   }
+  // }
+  _carregarEstatisticas(
+    String filialId, {
+    DateTime? dataInicial,
+    DateTime? dataFinal,
+  }) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -70,6 +238,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final stats = await _firebaseService.calcularEstatisticasFilial(
         filialId,
         filial.filial,
+        dataInicial: dataInicial,
+        dataFinal: dataFinal,
       );
 
       setState(() {
@@ -81,6 +251,13 @@ class _HomeScreenState extends State<HomeScreen> {
         _errorMessage = 'Erro ao carregar estatísticas: $e';
         _isLoading = false;
       });
+
+      // mostra o erro mesmo que já existam dados antigos na tela
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_errorMessage!)),
+        );
+      }
     }
   }
 
@@ -89,7 +266,12 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       filialSelecionada = filial;
     });
-    _carregarEstatisticas(filial.id);
+    // _carregarEstatisticas(filial.id);
+    _carregarEstatisticas(
+      filial.id,
+      dataInicial: periodoSelecionado?.start,
+      dataFinal: periodoSelecionado?.end,
+    );
   }
 
   @override
@@ -125,11 +307,36 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           // Título da filial
                           _buildFilialTitle(),
-                          const SizedBox(height: 24),
+                          // const SizedBox(height: 24),
+                          const SizedBox(height: 8),
+
+                          _buildFiltroPeriodo(),
+                          // Row(
+                          //   children: [
+                          //     Expanded(child: _buildFiltroPeriodo()),
+                          //     const SizedBox(width: 12),
+                          //     ElevatedButton.icon(
+                          //       onPressed: _exportarParaExcel,
+                          //       icon: const Icon(Icons.file_download,
+                          //           color: Colors.white),
+                          //       label: const Text('Exportar Excel'),
+                          //       style: ElevatedButton.styleFrom(
+                          //         backgroundColor: Colors.green[700],
+                          //         foregroundColor: Colors.white,
+                          //         padding: const EdgeInsets.symmetric(
+                          //             horizontal: 20, vertical: 18),
+                          //         shape: RoundedRectangleBorder(
+                          //           borderRadius: BorderRadius.circular(16),
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
+                          const SizedBox(height: 12),
 
                           // Satisfação Geral
                           _buildSatisfacaoGeralCard(),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 16),
 
                           // Grid responsivo de cards
                           if (isMobile)
@@ -194,12 +401,12 @@ class _HomeScreenState extends State<HomeScreen> {
           estatisticas!.mediaQualidadeProdutos,
           Icons.star,
         ),
-        const SizedBox(height: 16),
-        _buildMetricCard(
-          'Temperatura',
-          estatisticas!.mediaTemperatura,
-          Icons.thermostat,
-        ),
+        // const SizedBox(height: 16),
+        // _buildMetricCard(
+        //   'Temperatura',
+        //   estatisticas!.mediaTemperatura,
+        //   Icons.thermostat,
+        // ),
         const SizedBox(height: 16),
         _buildMetricCard(
           'Variedade',
@@ -244,14 +451,14 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 20),
         Row(
           children: [
-            Expanded(
-              child: _buildMetricCard(
-                'Temperatura',
-                estatisticas!.mediaTemperatura,
-                Icons.thermostat,
-              ),
-            ),
-            const SizedBox(width: 20),
+            // Expanded(
+            //   child: _buildMetricCard(
+            //     'Temperatura',
+            //     estatisticas!.mediaTemperatura,
+            //     Icons.thermostat,
+            //   ),
+            // ),
+            // const SizedBox(width: 20),
             Expanded(
               child: _buildMetricCard(
                 'Variedade',
@@ -305,11 +512,11 @@ class _HomeScreenState extends State<HomeScreen> {
         // Segunda linha
         Row(
           children: [
-            Expanded(
-              child: _buildMetricCardDesktop('Temperatura',
-                  estatisticas!.mediaTemperatura, Icons.thermostat),
-            ),
-            const SizedBox(width: 28),
+            // Expanded(
+            //   child: _buildMetricCardDesktop('Temperatura',
+            //       estatisticas!.mediaTemperatura, Icons.thermostat),
+            // ),
+            // const SizedBox(width: 28),
             Expanded(
               child: _buildMetricCardDesktop('Variedade',
                   estatisticas!.mediaVariedadeProdutos, Icons.menu),
@@ -335,6 +542,182 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// ==================== COMPONENTES ====================
+  // Widget _buildFiltroPeriodo() {
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: const EdgeInsets.all(20),
+  //     margin: const EdgeInsets.only(bottom: 24),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(16),
+  //       border: Border.all(color: Colors.grey.shade300),
+  //     ),
+  //     child: SingleChildScrollView(
+  //       scrollDirection: Axis.horizontal,
+  //       child: Row(
+  //         // spacing: 16,
+  //         // runSpacing: 16,
+  //         // crossAxisAlignment: WrapCrossAlignment.center,
+  //         children: [
+  //           const Text(
+  //             "Período:",
+  //             style: TextStyle(
+  //               fontWeight: FontWeight.bold,
+  //               fontSize: 16,
+  //             ),
+  //           ),
+  //           SizedBox(width: 4),
+  //           OutlinedButton.icon(
+  //             icon: const Icon(
+  //               Icons.calendar_today,
+  //               color: Colors.orange,
+  //             ),
+  //             label: Text(
+  //               dataInicial == null
+  //                   ? "Data Inicial"
+  //                   : DateFormat("dd/MM/yyyy").format(dataInicial!),
+  //             ),
+  //             onPressed: () async {
+  //               final data = await showDatePicker(
+  //                 context: context,
+  //                 initialDate: dataInicial ?? DateTime.now(),
+  //                 firstDate: DateTime(2024),
+  //                 lastDate: DateTime(2035),
+  //               );
+
+  //               if (data != null) {
+  //                 setState(() {
+  //                   dataInicial = data;
+  //                 });
+  //               }
+  //             },
+  //           ),
+  //           SizedBox(width: 4),
+  //           OutlinedButton.icon(
+  //             icon: const Icon(Icons.calendar_today, color: Colors.orange),
+  //             label: Text(
+  //               dataFinal == null
+  //                   ? "Data Final"
+  //                   : DateFormat("dd/MM/yyyy").format(dataFinal!),
+  //             ),
+  //             onPressed: () async {
+  //               final data = await showDatePicker(
+  //                 context: context,
+  //                 initialDate: dataFinal ?? DateTime.now(),
+  //                 firstDate: DateTime(2024),
+  //                 lastDate: DateTime(2035),
+  //               );
+
+  //               if (data != null) {
+  //                 setState(() {
+  //                   dataFinal = data;
+  //                 });
+  //               }
+  //             },
+  //           ),
+  //           SizedBox(width: 4),
+  //           ElevatedButton.icon(
+  //             icon: const Icon(Icons.search, color: Colors.white),
+  //             label: const Text("Filtrar"),
+  //             onPressed: () {
+  //               if (filialSelecionada != null) {
+  //                 // _carregarEstatisticas(filialSelecionada!.id);
+  //                 _carregarEstatisticas(
+  //                   filialSelecionada!.id,
+  //                   dataInicial: dataInicial,
+  //                   dataFinal: dataFinal,
+  //                 );
+  //               }
+  //             },
+  //           ),
+  //           if (dataInicial != null || dataFinal != null)
+  //             TextButton(
+  //               child: const Text("Limpar"),
+  //               onPressed: () {
+  //                 setState(() {
+  //                   dataInicial = null;
+  //                   dataFinal = null;
+  //                 });
+
+  //                 _carregarEstatisticas(filialSelecionada!.id);
+  //               },
+  //             ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+  Widget _buildFiltroPeriodo() {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () async {
+        final novoPeriodo = await showDateRangePicker(
+          context: context,
+          firstDate: DateTime(2024),
+          lastDate: DateTime(2035),
+          initialDateRange: periodoSelecionado,
+        );
+
+        if (novoPeriodo == null) return;
+
+        setState(() {
+          periodoSelecionado = novoPeriodo;
+        });
+
+        _carregarEstatisticas(
+          filialSelecionada!.id,
+          dataInicial: novoPeriodo.start,
+          dataFinal: novoPeriodo.end,
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.date_range,
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Período",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "${DateFormat('dd/MM/yyyy').format(periodoSelecionado!.start)}"
+                    " até "
+                    "${DateFormat('dd/MM/yyyy').format(periodoSelecionado!.end)}",
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.edit_calendar)
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Constrói a AppBar
   PreferredSizeWidget _buildAppBar() {
@@ -357,7 +740,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Dashboard de Avaliações',
+                'Avaliações',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppTheme.textDark,
@@ -632,7 +1015,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final media = estatisticas!.mediaSatisfacaoGeral;
     final cor = _getCorPorMedia(media);
-    final percentual = (media / 5.0) * 100;
+    final percentual = (media / 3.0) * 100;
 
     return Container(
       decoration: BoxDecoration(
@@ -683,7 +1066,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '/ 5.0',
+                      '/ 3.0',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppTheme.textLight,
                           ),
@@ -694,7 +1077,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
-                    value: media / 5.0,
+                    value: media / 3.0,
                     minHeight: 8,
                     backgroundColor: Colors.grey[300],
                     valueColor: AlwaysStoppedAnimation<Color>(cor),
@@ -750,7 +1133,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Constrói um card de métrica individual (ORIGINAL - para mobile/tablet)
   Widget _buildMetricCard(String titulo, double valor, IconData icone) {
     final cor = _getCorPorMedia(valor);
-    final percentual = (valor / 5.0) * 100;
+    final percentual = (valor / 3.0) * 100;
 
     return Container(
       decoration: BoxDecoration(
@@ -808,7 +1191,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 4),
               Text(
-                '/ 5',
+                '/ 3',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppTheme.textLight,
                     ),
@@ -819,7 +1202,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: valor / 5.0,
+              value: valor / 3.0,
               minHeight: 6,
               backgroundColor: Colors.grey[200],
               valueColor: AlwaysStoppedAnimation<Color>(cor),
@@ -850,7 +1233,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Constrói um card de métrica GRANDE para desktop (NOVO DESIGN)
   Widget _buildMetricCardDesktop(String titulo, double valor, IconData icone) {
     final cor = _getCorPorMedia(valor);
-    final percentual = (valor / 5.0) * 100;
+    final percentual = (valor / 3.0) * 100;
 
     return Container(
       decoration: BoxDecoration(
@@ -904,7 +1287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'de 5.0',
+                    'de 3.0',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey[600],
                         ),
@@ -943,7 +1326,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(3),
               child: LinearProgressIndicator(
-                value: valor / 5.0,
+                value: valor / 3.0,
                 backgroundColor: Colors.transparent,
                 valueColor: AlwaysStoppedAnimation<Color>(cor),
               ),
@@ -1205,7 +1588,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
-                      interval: 1,
+                      interval: 0.5,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
                         if (index >= 0 && index < datas.length) {
@@ -1254,7 +1637,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 minX: 0,
                 maxX: (spots.length - 1).toDouble(),
                 minY: 0,
-                maxY: 5,
+                maxY: 3,
                 lineBarsData: [
                   LineChartBarData(
                     spots: spots,
@@ -1321,10 +1704,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Retorna a cor baseada na média
+  // /// Retorna a cor baseada na média
   Color _getCorPorMedia(double media) {
-    if (media >= 4.0) return Colors.green;
-    if (media >= 3.0) return Colors.amber;
+    if (media >= 2.5) return Colors.green;
+    if (media >= 1.8) return Colors.amber;
     return Colors.red;
   }
+  // Color _getCorPorMedia(double media) {
+  //   if (media >= 4.0) return Colors.green;
+  //   if (media >= 3.0) return Colors.amber;
+  //   return Colors.red;
+  // }
 }

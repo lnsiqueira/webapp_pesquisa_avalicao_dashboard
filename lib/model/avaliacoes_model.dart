@@ -223,8 +223,8 @@ class EstatisticasFilial {
         avaliacoes.map((a) => a.avaliacoes.saborDouble).toList();
     final qualidadeValues =
         avaliacoes.map((a) => a.avaliacoes.qualidadeProdutosDouble).toList();
-    final temperaturaValues =
-        avaliacoes.map((a) => a.avaliacoes.temperaturaDouble).toList();
+    // final temperaturaValues =
+    //     avaliacoes.map((a) => a.avaliacoes.temperaturaDouble).toList();
     final variedadeValues =
         avaliacoes.map((a) => a.avaliacoes.variedadeProdutosDouble).toList();
     final caixaValues =
@@ -238,7 +238,7 @@ class EstatisticasFilial {
       totalAvaliacoes: avaliacoes.length,
       mediaSabor: calcularMedia(saborValues),
       mediaQualidadeProdutos: calcularMedia(qualidadeValues),
-      mediaTemperatura: calcularMedia(temperaturaValues),
+      mediaTemperatura: 0.0,
       mediaVariedadeProdutos: calcularMedia(variedadeValues),
       mediaCaixaAtendimento: calcularMedia(caixaValues),
       mediaSatisfacaoGeral: calcularMedia(satisfacaoValues),
@@ -250,7 +250,7 @@ class EstatisticasFilial {
   List<double> get mediasPorCriterio => [
         mediaSabor,
         mediaQualidadeProdutos,
-        mediaTemperatura,
+        // mediaTemperatura,
         mediaVariedadeProdutos,
         mediaCaixaAtendimento,
       ];
@@ -259,7 +259,7 @@ class EstatisticasFilial {
   static List<String> get nomeCriterios => [
         'Sabor',
         'Qualidade',
-        'Temperatura',
+        // 'Temperatura',
         'Variedade',
         'Atendimento',
       ];
