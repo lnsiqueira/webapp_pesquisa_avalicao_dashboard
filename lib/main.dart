@@ -20,15 +20,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Dona Deôla - Dashboard',
       theme: AppTheme.theme,
-      // home: const LoginScreen(),
-      home: HomeScreen(
-        loggedInUser: User(
-            id: 'id',
-            name: 'name',
-            role: 'role',
-            email: 'email',
-            avatar: 'avatar'),
-      ),
+      home: const LoginScreen(),
+      // home: HomeScreen(
+      //   loggedInUser: User(
+      //       id: 'id',
+      //       name: 'name',
+      //       role: 'role',
+      //       email: 'email',
+      //       avatar: 'avatar'),
+      // ),
       debugShowCheckedModeBanner: false,
     );
   }
