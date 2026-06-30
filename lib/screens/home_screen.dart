@@ -1,11 +1,12 @@
+import 'package:excel/excel.dart' as excel_lib;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:webapp_pesquisa_avalicao_dashboard/model/avaliacoes_model.dart';
 import 'package:webapp_pesquisa_avalicao_dashboard/model/user_model.dart';
-import 'package:webapp_pesquisa_avalicao_dashboard/services/excel_service.dart';
 import 'package:webapp_pesquisa_avalicao_dashboard/services/firebase_service.dart';
 import '../theme/app_theme.dart';
+import 'dart:html' as html;
 
 class HomeScreen extends StatefulWidget {
   final User loggedInUser;
@@ -21,7 +22,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  final ExcelExportService _excelExportService = ExcelExportService();
 
   List<Filial> filiais = [];
   Filial? filialSelecionada;
@@ -44,110 +44,110 @@ class _HomeScreenState extends State<HomeScreen> {
     _carregarFiliais();
   }
 
-  // void exportarEstatisticas(EstatisticasFilial estatisticas) {
-  //   final excel = Excel.createExcel();
+  void exportarEstatisticas(EstatisticasFilial estatisticas) {
+    final excel = excel_lib.Excel.createExcel();
 
-  //   // NÃO delete o Sheet1 aqui ainda
+    // NÃO delete o Sheet1 aqui ainda
 
-  //   // ===== Aba 1: Resumo =====
-  //   final resumo = excel['Resumo'];
+    // ===== Aba 1: Resumo =====
+    final resumo = excel['Resumo'];
 
-  //   resumo.appendRow([
-  //     TextCellValue('Filial'),
-  //     TextCellValue(estatisticas.filialNome),
-  //   ]);
-  //   resumo.appendRow([
-  //     TextCellValue('Total de Avaliações'),
-  //     IntCellValue(estatisticas.totalAvaliacoes),
-  //   ]);
-  //   resumo.appendRow([]);
-  //   resumo.appendRow([
-  //     TextCellValue('Métrica'),
-  //     TextCellValue('Média'),
-  //     TextCellValue('% Satisfação'),
-  //   ]);
+    resumo.appendRow([
+      excel_lib.TextCellValue('Filial'),
+      excel_lib.TextCellValue(estatisticas.filialNome),
+    ]);
+    resumo.appendRow([
+      excel_lib.TextCellValue('Total de Avaliações'),
+      excel_lib.IntCellValue(estatisticas.totalAvaliacoes),
+    ]);
+    resumo.appendRow([]);
+    resumo.appendRow([
+      excel_lib.TextCellValue('Métrica'),
+      excel_lib.TextCellValue('Média'),
+      excel_lib.TextCellValue('% Satisfação'),
+    ]);
 
-  //   void linhaMetrica(String nome, double valor) {
-  //     resumo.appendRow([
-  //       TextCellValue(nome),
-  //       TextCellValue(valor.toStringAsFixed(2)),
-  //       TextCellValue('${((valor / 3.0) * 100).toStringAsFixed(0)}%'),
-  //     ]);
-  //   }
+    void linhaMetrica(String nome, double valor) {
+      resumo.appendRow([
+        excel_lib.TextCellValue(nome),
+        excel_lib.TextCellValue(valor.toStringAsFixed(2)),
+        excel_lib.TextCellValue('${((valor / 3.0) * 100).toStringAsFixed(0)}%'),
+      ]);
+    }
 
-  //   linhaMetrica('Satisfação Geral', estatisticas.mediaSatisfacaoGeral);
-  //   linhaMetrica('Sabor', estatisticas.mediaSabor);
-  //   linhaMetrica('Qualidade dos Produtos', estatisticas.mediaQualidadeProdutos);
-  //   linhaMetrica('Variedade de Produtos', estatisticas.mediaVariedadeProdutos);
-  //   linhaMetrica('Atendimento', estatisticas.mediaCaixaAtendimento);
+    linhaMetrica('Satisfação Geral', estatisticas.mediaSatisfacaoGeral);
+    linhaMetrica('Sabor', estatisticas.mediaSabor);
+    linhaMetrica('Qualidade dos Produtos', estatisticas.mediaQualidadeProdutos);
+    linhaMetrica('Variedade de Produtos', estatisticas.mediaVariedadeProdutos);
+    linhaMetrica('Atendimento', estatisticas.mediaCaixaAtendimento);
 
-  //   for (var col = 0; col < 3; col++) {
-  //     final cell = resumo.cell(CellIndex.indexByColumnRow(
-  //       columnIndex: col,
-  //       rowIndex: 3,
-  //     ));
-  //     cell.cellStyle = CellStyle(bold: true);
-  //   }
+    for (var col = 0; col < 3; col++) {
+      final cell = resumo.cell(excel_lib.CellIndex.indexByColumnRow(
+        columnIndex: col,
+        rowIndex: 3,
+      ));
+      cell.cellStyle = excel_lib.CellStyle(bold: true);
+    }
 
-  //   // ===== Aba 2: Avaliações Detalhadas =====
-  //   final detalhes = excel['Avaliações'];
+    // ===== Aba 2: Avaliações Detalhadas =====
+    final detalhes = excel['Avaliações'];
 
-  //   detalhes.appendRow([
-  //     TextCellValue('Usuário'),
-  //     TextCellValue('Data/Hora'),
-  //     TextCellValue('Satisfação Geral'),
-  //     TextCellValue('Sabor'),
-  //     TextCellValue('Qualidade'),
-  //     TextCellValue('Variedade'),
-  //     TextCellValue('Atendimento'),
-  //     TextCellValue('Comentário'),
-  //   ]);
+    detalhes.appendRow([
+      excel_lib.TextCellValue('Usuário'),
+      excel_lib.TextCellValue('Data/Hora'),
+      excel_lib.TextCellValue('Satisfação Geral'),
+      excel_lib.TextCellValue('Sabor'),
+      excel_lib.TextCellValue('Qualidade'),
+      excel_lib.TextCellValue('Variedade'),
+      excel_lib.TextCellValue('Atendimento'),
+      excel_lib.TextCellValue('Comentário'),
+    ]);
 
-  //   for (var col = 0; col < 8; col++) {
-  //     final cell = detalhes.cell(CellIndex.indexByColumnRow(
-  //       columnIndex: col,
-  //       rowIndex: 0,
-  //     ));
-  //     cell.cellStyle = CellStyle(bold: true);
-  //   }
+    for (var col = 0; col < 8; col++) {
+      final cell = detalhes.cell(excel_lib.CellIndex.indexByColumnRow(
+        columnIndex: col,
+        rowIndex: 0,
+      ));
+      cell.cellStyle = excel_lib.CellStyle(bold: true);
+    }
 
-  //   for (final av in estatisticas.avaliacoes) {
-  //     detalhes.appendRow([
-  //       TextCellValue(av.usuarioId),
-  //       TextCellValue(
-  //           DateFormat('dd/MM/yyyy HH:mm').format(av.dataHoraResposta)),
-  //       DoubleCellValue(av.avaliacoes.satisfacaoGeralDouble),
-  //       DoubleCellValue(av.avaliacoes.saborDouble),
-  //       DoubleCellValue(av.avaliacoes.qualidadeProdutosDouble),
-  //       DoubleCellValue(av.avaliacoes.variedadeProdutosDouble),
-  //       DoubleCellValue(av.avaliacoes.caixaAtendimentoDouble),
-  //       TextCellValue(av.comentarios),
-  //     ]);
-  //   }
+    for (final av in estatisticas.avaliacoes) {
+      detalhes.appendRow([
+        excel_lib.TextCellValue(av.usuarioId),
+        excel_lib.TextCellValue(
+            DateFormat('dd/MM/yyyy HH:mm').format(av.dataHoraResposta)),
+        excel_lib.DoubleCellValue(av.avaliacoes.satisfacaoGeralDouble),
+        excel_lib.DoubleCellValue(av.avaliacoes.saborDouble),
+        excel_lib.DoubleCellValue(av.avaliacoes.qualidadeProdutosDouble),
+        excel_lib.DoubleCellValue(av.avaliacoes.variedadeProdutosDouble),
+        excel_lib.DoubleCellValue(av.avaliacoes.caixaAtendimentoDouble),
+        excel_lib.TextCellValue(av.comentarios),
+      ]);
+    }
 
-  //   // ✅ deleta o Sheet1 só agora, depois que Resumo/Avaliações já existem e têm conteúdo
-  //   if (excel.sheets.containsKey('Sheet1')) {
-  //     excel.delete('Sheet1');
-  //   }
+    // ✅ deleta o Sheet1 só agora, depois que Resumo/Avaliações já existem e têm conteúdo
+    if (excel.sheets.containsKey('Sheet1')) {
+      excel.delete('Sheet1');
+    }
 
-  //   // ===== Gera os bytes e dispara o download =====
-  //   final bytes = excel.encode();
-  //   if (bytes == null) return;
+    // ===== Gera os bytes e dispara o download =====
+    final bytes = excel.encode();
+    if (bytes == null) return;
 
-  //   final nomeArquivo =
-  //       'avaliacoes_${estatisticas.filialNome}_${DateFormat('ddMMyyyy').format(DateTime.now())}.xlsx'
-  //           .replaceAll(' ', '_');
+    final nomeArquivo =
+        'avaliacoes_${estatisticas.filialNome}_${DateFormat('ddMMyyyy').format(DateTime.now())}.xlsx'
+            .replaceAll(' ', '_');
 
-  //   final blob = html.Blob(
-  //     [bytes],
-  //     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  //   );
-  //   final url = html.Url.createObjectUrlFromBlob(blob);
-  //   final anchor = html.AnchorElement(href: url)
-  //     ..setAttribute('download', nomeArquivo)
-  //     ..click();
-  //   html.Url.revokeObjectUrl(url);
-  // }
+    final blob = html.Blob(
+      [bytes],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', nomeArquivo)
+      ..click();
+    html.Url.revokeObjectUrl(url);
+  }
 
   /// Carrega a lista de filiais
   void _carregarFiliais() async {
@@ -308,30 +308,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           // Título da filial
                           _buildFilialTitle(),
                           // const SizedBox(height: 24),
-                          const SizedBox(height: 8),
 
+                          const SizedBox(height: 8),
                           _buildFiltroPeriodo(),
-                          // Row(
-                          //   children: [
-                          //     Expanded(child: _buildFiltroPeriodo()),
-                          //     const SizedBox(width: 12),
-                          //     ElevatedButton.icon(
-                          //       onPressed: _exportarParaExcel,
-                          //       icon: const Icon(Icons.file_download,
-                          //           color: Colors.white),
-                          //       label: const Text('Exportar Excel'),
-                          //       style: ElevatedButton.styleFrom(
-                          //         backgroundColor: Colors.green[700],
-                          //         foregroundColor: Colors.white,
-                          //         padding: const EdgeInsets.symmetric(
-                          //             horizontal: 20, vertical: 18),
-                          //         shape: RoundedRectangleBorder(
-                          //           borderRadius: BorderRadius.circular(16),
-                          //         ),
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
+
                           const SizedBox(height: 12),
 
                           // Satisfação Geral
@@ -976,31 +956,55 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(
-              Icons.store,
-              color: AppTheme.primaryRed,
-              size: 28,
+            Row(
+              children: [
+                Icon(
+                  Icons.store,
+                  color: AppTheme.primaryRed,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      estatisticas!.filialNome,
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textDark,
+                              ),
+                    ),
+                    Text(
+                      '${estatisticas!.totalAvaliacoes} avaliações',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textLight,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    estatisticas!.filialNome,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textDark,
-                        ),
-                  ),
-                  Text(
-                    '${estatisticas!.totalAvaliacoes} avaliações',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textLight,
-                        ),
-                  ),
-                ],
+            ElevatedButton.icon(
+              onPressed: () {
+                if (estatisticas == null) return;
+                exportarEstatisticas(estatisticas!);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Excel gerado com sucesso!')),
+                );
+              },
+              icon: const Icon(Icons.file_download, color: Colors.white),
+              label: const Text('Exportar Excel'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green[700],
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ],
