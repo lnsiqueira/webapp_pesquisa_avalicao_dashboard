@@ -28,8 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   EstatisticasFilial? estatisticas;
   bool _isLoading = false;
   String? _errorMessage;
-  // DateTime? dataInicial;
-  // DateTime? dataFinal;
+
   DateTimeRange? periodoSelecionado;
   @override
   void initState() {
@@ -44,108 +43,236 @@ class _HomeScreenState extends State<HomeScreen> {
     _carregarFiliais();
   }
 
-  void exportarEstatisticas(EstatisticasFilial estatisticas) {
+  // void exportarEstatisticas(EstatisticasFilial estatisticas) {
+  //   final excel = excel_lib.Excel.createExcel();
+
+  //   // ===== Aba 1: Resumo =====
+  //   final resumo = excel['Resumo'];
+
+  //   resumo.appendRow([
+  //     excel_lib.TextCellValue('Filial'),
+  //     excel_lib.TextCellValue(estatisticas.filialNome),
+  //   ]);
+  //   resumo.appendRow([
+  //     excel_lib.TextCellValue('Total de Avaliações'),
+  //     excel_lib.IntCellValue(estatisticas.totalAvaliacoes),
+  //   ]);
+  //   resumo.appendRow([]);
+  //   resumo.appendRow([
+  //     excel_lib.TextCellValue('Métrica'),
+  //     excel_lib.TextCellValue('Média'),
+  //     excel_lib.TextCellValue('% Satisfação'),
+  //   ]);
+
+  //   void linhaMetrica(String nome, double valor) {
+  //     resumo.appendRow([
+  //       excel_lib.TextCellValue(nome),
+  //       excel_lib.TextCellValue(valor.toStringAsFixed(2)),
+  //       excel_lib.TextCellValue('${((valor / 3.0) * 100).toStringAsFixed(0)}%'),
+  //     ]);
+  //   }
+
+  //   linhaMetrica('Satisfação Geral', estatisticas.mediaSatisfacaoGeral);
+  //   linhaMetrica('Sabor', estatisticas.mediaSabor);
+  //   linhaMetrica('Qualidade dos Produtos', estatisticas.mediaQualidadeProdutos);
+  //   linhaMetrica('Variedade de Produtos', estatisticas.mediaVariedadeProdutos);
+  //   linhaMetrica('Atendimento', estatisticas.mediaCaixaAtendimento);
+
+  //   for (var col = 0; col < 3; col++) {
+  //     final cell = resumo.cell(excel_lib.CellIndex.indexByColumnRow(
+  //       columnIndex: col,
+  //       rowIndex: 3,
+  //     ));
+  //     cell.cellStyle = excel_lib.CellStyle(bold: true);
+  //   }
+
+  //   // ===== Aba 2: Avaliações Detalhadas (sem consolidar — uma linha por resposta) =====
+  //   final detalhes = excel['Avaliações'];
+
+  //   detalhes.appendRow([
+  //     excel_lib.TextCellValue('Data/Hora'),
+  //     excel_lib.TextCellValue('Pergunta'),
+  //     excel_lib.TextCellValue('Resposta'),
+  //     excel_lib.TextCellValue('Nome'),
+  //     excel_lib.TextCellValue('Comentário'),
+  //   ]);
+
+  //   for (var col = 0; col < 5; col++) {
+  //     final cell = detalhes.cell(excel_lib.CellIndex.indexByColumnRow(
+  //       columnIndex: col,
+  //       rowIndex: 0,
+  //     ));
+  //     cell.cellStyle = excel_lib.CellStyle(bold: true);
+  //   }
+
+  //   // Ordena por data/hora, mais antiga primeiro (troque para sort reverse se quiser mais recente primeiro)
+  //   final avaliacoesOrdenadas = [...estatisticas.avaliacoes]
+  //     ..sort((a, b) => a.dataHoraResposta.compareTo(b.dataHoraResposta));
+
+  //   for (final av in avaliacoesOrdenadas) {
+  //     final dataHoraFormatada =
+  //         DateFormat('dd/MM/yyyy HH:mm').format(av.dataHoraResposta);
+
+  //     final perguntas = <String, double>{
+  //       'Satisfação Geral': av.avaliacoes.satisfacaoGeralDouble,
+  //       'Sabor': av.avaliacoes.saborDouble,
+  //       'Qualidade dos Produtos': av.avaliacoes.qualidadeProdutosDouble,
+  //       'Variedade de Produtos': av.avaliacoes.variedadeProdutosDouble,
+  //       'Atendimento': av.avaliacoes.caixaAtendimentoDouble,
+  //     };
+
+  //     perguntas.forEach((pergunta, resposta) {
+  //       detalhes.appendRow([
+  //         excel_lib.TextCellValue(dataHoraFormatada),
+  //         excel_lib.TextCellValue(pergunta),
+  //         excel_lib.DoubleCellValue(resposta),
+  //         excel_lib.TextCellValue(av.usuarioId),
+  //         excel_lib.TextCellValue(
+  //             ''), // comentário só na linha de comentário, abaixo
+  //       ]);
+  //     });
+
+  //     // Se houver comentário, adiciona uma linha extra só para ele
+  //     if (av.comentarios.trim().isNotEmpty) {
+  //       detalhes.appendRow([
+  //         excel_lib.TextCellValue(dataHoraFormatada),
+  //         excel_lib.TextCellValue('Comentário'),
+  //         excel_lib.TextCellValue(''),
+  //         excel_lib.TextCellValue(av.usuarioId),
+  //         excel_lib.TextCellValue(av.comentarios),
+  //       ]);
+  //     }
+
+  //     // linha em branco separando uma avaliação da outra
+  //     detalhes.appendRow([]);
+  //   }
+
+  //   // deleta o Sheet1 só agora, depois que Resumo/Avaliações já existem e têm conteúdo
+  //   if (excel.sheets.containsKey('Sheet1')) {
+  //     excel.delete('Sheet1');
+  //   }
+
+  //   // ===== Gera os bytes e dispara o download =====
+  //   final bytes = excel.encode();
+  //   if (bytes == null) return;
+
+  //   final nomeArquivo =
+  //       'avaliacoes_${estatisticas.filialNome}_${DateFormat('ddMMyyyy').format(DateTime.now())}.xlsx'
+  //           .replaceAll(' ', '_');
+
+  //   final blob = html.Blob(
+  //     [bytes],
+  //     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  //   );
+  //   final url = html.Url.createObjectUrlFromBlob(blob);
+  //   final anchor = html.AnchorElement(href: url)
+  //     ..setAttribute('download', nomeArquivo)
+  //     ..click();
+  //   html.Url.revokeObjectUrl(url);c
+  // }
+  void exportarEstatisticas(
+      EstatisticasFilial estatisticas, DateTimeRange periodoSelecionado) {
     final excel = excel_lib.Excel.createExcel();
 
-    // NÃO delete o Sheet1 aqui ainda
+    final avaliacoes = List<Avaliacao>.from(estatisticas.avaliacoes)
+      ..sort((a, b) => a.dataHoraResposta.compareTo(b.dataHoraResposta));
 
-    // ===== Aba 1: Resumo =====
+    final dataInicial =
+        avaliacoes.isNotEmpty ? avaliacoes.first.dataHoraResposta : null;
+
+    final dataFinal =
+        avaliacoes.isNotEmpty ? avaliacoes.last.dataHoraResposta : null;
+
     final resumo = excel['Resumo'];
-
+    final inicio = periodoSelecionado.start;
+    final fim = periodoSelecionado.end;
     resumo.appendRow([
       excel_lib.TextCellValue('Filial'),
       excel_lib.TextCellValue(estatisticas.filialNome),
     ]);
     resumo.appendRow([
-      excel_lib.TextCellValue('Total de Avaliações'),
-      excel_lib.IntCellValue(estatisticas.totalAvaliacoes),
+      excel_lib.TextCellValue('Período selecionado'),
+      excel_lib.TextCellValue(
+        '${DateFormat('dd/MM/yyyy').format(inicio)} até ${DateFormat('dd/MM/yyyy').format(fim)}',
+      ),
     ]);
-    resumo.appendRow([]);
+    // resumo.appendRow([
+    //   excel_lib.TextCellValue('Período'),
+    //   excel_lib.TextCellValue(
+    //     dataInicial == null
+    //         ? '-'
+    //         : '${DateFormat('dd/MM/yyyy').format(dataInicial)} até ${DateFormat('dd/MM/yyyy').format(dataFinal!)}',
+    //   ),
+    // ]);
+
     resumo.appendRow([
-      excel_lib.TextCellValue('Métrica'),
-      excel_lib.TextCellValue('Média'),
-      excel_lib.TextCellValue('% Satisfação'),
+      excel_lib.TextCellValue('Total de Avaliações'),
+      excel_lib.IntCellValue(avaliacoes.length),
     ]);
 
-    void linhaMetrica(String nome, double valor) {
-      resumo.appendRow([
-        excel_lib.TextCellValue(nome),
-        excel_lib.TextCellValue(valor.toStringAsFixed(2)),
-        excel_lib.TextCellValue('${((valor / 3.0) * 100).toStringAsFixed(0)}%'),
-      ]);
-    }
-
-    linhaMetrica('Satisfação Geral', estatisticas.mediaSatisfacaoGeral);
-    linhaMetrica('Sabor', estatisticas.mediaSabor);
-    linhaMetrica('Qualidade dos Produtos', estatisticas.mediaQualidadeProdutos);
-    linhaMetrica('Variedade de Produtos', estatisticas.mediaVariedadeProdutos);
-    linhaMetrica('Atendimento', estatisticas.mediaCaixaAtendimento);
-
-    for (var col = 0; col < 3; col++) {
-      final cell = resumo.cell(excel_lib.CellIndex.indexByColumnRow(
-        columnIndex: col,
-        rowIndex: 3,
-      ));
-      cell.cellStyle = excel_lib.CellStyle(bold: true);
-    }
-
-    // ===== Aba 2: Avaliações Detalhadas =====
     final detalhes = excel['Avaliações'];
 
     detalhes.appendRow([
-      excel_lib.TextCellValue('Usuário'),
-      excel_lib.TextCellValue('Data/Hora'),
+      excel_lib.TextCellValue('Data'),
+      excel_lib.TextCellValue('Hora'),
+      excel_lib.TextCellValue('Nome'),
       excel_lib.TextCellValue('Satisfação Geral'),
       excel_lib.TextCellValue('Sabor'),
       excel_lib.TextCellValue('Qualidade'),
       excel_lib.TextCellValue('Variedade'),
       excel_lib.TextCellValue('Atendimento'),
-      excel_lib.TextCellValue('Comentário'),
+      excel_lib.TextCellValue('Comentários'),
     ]);
 
-    for (var col = 0; col < 8; col++) {
-      final cell = detalhes.cell(excel_lib.CellIndex.indexByColumnRow(
-        columnIndex: col,
-        rowIndex: 0,
-      ));
-      cell.cellStyle = excel_lib.CellStyle(bold: true);
-    }
-
     for (final av in estatisticas.avaliacoes) {
+      final n = av.avaliacoes;
+
+      final data = DateFormat('dd/MM/yyyy').format(av.dataHoraResposta);
+      final hora = DateFormat('HH:mm').format(av.dataHoraResposta);
+
+      final usuario = av.usuarioId.toString();
+      final comentario = (av.comentarios ?? '').toString();
+
+      final sabor = n.sabor?.toInt() ?? 0;
+      final qualidade = n.qualidadeProdutos?.toInt() ?? 0;
+      final variedade = n.variedadeProdutos?.toInt() ?? 0;
+      final atendimento = n.caixaAtendimento?.toInt() ?? 0;
+      final satisfacao = n.satisfacaoGeral?.toInt() ?? 0;
+
       detalhes.appendRow([
-        excel_lib.TextCellValue(av.usuarioId),
-        excel_lib.TextCellValue(
-            DateFormat('dd/MM/yyyy HH:mm').format(av.dataHoraResposta)),
-        excel_lib.DoubleCellValue(av.avaliacoes.satisfacaoGeralDouble),
-        excel_lib.DoubleCellValue(av.avaliacoes.saborDouble),
-        excel_lib.DoubleCellValue(av.avaliacoes.qualidadeProdutosDouble),
-        excel_lib.DoubleCellValue(av.avaliacoes.variedadeProdutosDouble),
-        excel_lib.DoubleCellValue(av.avaliacoes.caixaAtendimentoDouble),
-        excel_lib.TextCellValue(av.comentarios),
+        excel_lib.TextCellValue(data),
+        excel_lib.TextCellValue(hora),
+        excel_lib.TextCellValue(usuario),
+        excel_lib.IntCellValue(satisfacao),
+        excel_lib.IntCellValue(sabor),
+        excel_lib.IntCellValue(qualidade),
+        excel_lib.IntCellValue(variedade),
+        excel_lib.IntCellValue(atendimento),
+        excel_lib.TextCellValue(comentario),
       ]);
     }
 
-    // ✅ deleta o Sheet1 só agora, depois que Resumo/Avaliações já existem e têm conteúdo
     if (excel.sheets.containsKey('Sheet1')) {
       excel.delete('Sheet1');
     }
 
-    // ===== Gera os bytes e dispara o download =====
     final bytes = excel.encode();
     if (bytes == null) return;
-
-    final nomeArquivo =
-        'avaliacoes_${estatisticas.filialNome}_${DateFormat('ddMMyyyy').format(DateTime.now())}.xlsx'
-            .replaceAll(' ', '_');
 
     final blob = html.Blob(
       [bytes],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
+
     final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', nomeArquivo)
+
+    html.AnchorElement(href: url)
+      ..setAttribute(
+        'download',
+        'avaliacoes_${estatisticas.filialNome}_${DateFormat('ddMMyyyy').format(DateTime.now())}.xlsx',
+      )
       ..click();
+
     html.Url.revokeObjectUrl(url);
   }
 
@@ -990,7 +1117,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton.icon(
               onPressed: () {
                 if (estatisticas == null) return;
-                exportarEstatisticas(estatisticas!);
+                exportarEstatisticas(estatisticas!, periodoSelecionado!);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Excel gerado com sucesso!')),
                 );
