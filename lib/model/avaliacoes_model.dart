@@ -115,6 +115,7 @@ class Avaliacao {
   final String idFilial;
   final DateTime dataHoraResposta;
   final String usuarioId;
+  final String? matricula;
   final AvaliacoesCriteria avaliacoes;
   final String comentarios;
   final OutrosInfo outros;
@@ -124,6 +125,7 @@ class Avaliacao {
     required this.idFilial,
     required this.dataHoraResposta,
     required this.usuarioId,
+    required this.matricula,
     required this.avaliacoes,
     required this.comentarios,
     required this.outros,
@@ -149,6 +151,7 @@ class Avaliacao {
       idFilial: map['id_filial']?.toString() ?? '',
       dataHoraResposta: dataHora,
       usuarioId: map['usuario_id'] ?? '',
+      matricula: map['matricula'] ?? '',
       avaliacoes: AvaliacoesCriteria.fromMap(map['avaliacoes'] ?? {}),
       comentarios: map['comentarios'] ?? '',
       outros: OutrosInfo.fromMap(map['outros'] ?? {}),
