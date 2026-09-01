@@ -24,11 +24,11 @@ class LoginService {
   static final List<LoginUser> mockUsers = [
     LoginUser(
       id: 'USR001',
-      name: 'Ana Silva da Costa',
-      email: 'ana.silva@donadeola.com',
-      password: '123456',
+      name: 'Administrativo Deôla',
+      email: 'admin.cea@donadeola.com',
+      password: 'admin123',
       avatar: 'assets/images/ana-costa.jpeg',
-      role: 'Desenvolvedora Sênior',
+      role: 'Gestão',
       isAdmin: false,
     ),
   ];
